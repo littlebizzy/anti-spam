@@ -27,3 +27,11 @@ add_filter( 'gu_override_dot_org', function( $overrides ) {
     return $overrides;
 }, 999 );
 
+// define allowed languages using iso 639-1 codes (comma-separated)
+if ( ! defined( 'ANTI_SPAM_LANGS' ) ) {
+    define( 'ANTI_SPAM_LANGS', 'en' );
+}
+
+
+
+// Ref: ChatGPT
