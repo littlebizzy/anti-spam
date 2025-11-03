@@ -32,6 +32,16 @@ if ( ! defined( 'ANTI_SPAM_LANGS' ) ) {
     define( 'ANTI_SPAM_LANGS', 'en' );
 }
 
+// minimum latin character ratio required for english-like detection
+if ( ! defined( 'ANTI_SPAM_LATIN_MIN' ) ) {
+    define( 'ANTI_SPAM_LATIN_MIN', 0.75 );
+}
+
+// minimum comment length required for language analysis
+if ( ! defined( 'ANTI_SPAM_MIN_LEN' ) ) {
+    define( 'ANTI_SPAM_MIN_LEN', 20 );
+}
+
 
 
 // Ref: ChatGPT
