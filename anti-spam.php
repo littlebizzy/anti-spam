@@ -32,12 +32,12 @@ if ( ! defined( 'ANTI_SPAM_LANGS' ) ) {
     define( 'ANTI_SPAM_LANGS', 'en' );
 }
 
-// minimum latin character ratio required for english-like detection
+// define minimum latin character ratio required for english-like detection
 if ( ! defined( 'ANTI_SPAM_LATIN_MIN' ) ) {
     define( 'ANTI_SPAM_LATIN_MIN', 0.75 );
 }
 
-// minimum comment length required for language analysis
+// define minimum comment length required for language analysis
 if ( ! defined( 'ANTI_SPAM_MIN_LEN' ) ) {
     define( 'ANTI_SPAM_MIN_LEN', 20 );
 }
@@ -46,21 +46,31 @@ if ( ! defined( 'ANTI_SPAM_MIN_LEN' ) ) {
 add_filter( 'pre_comment_approved', 'anti_spam_check_comment_language', 10, 2 );
 
 function anti_spam_check_comment_language( $approved, $commentdata ) {
+    // get comment text
     $content = isset( $commentdata['comment_content'] ) ? (string) $commentdata['comment_content'] : '';
 
+    // normalize utf-8
+    $content = wp_check_invalid_utf8( $content );
+
+    // skip short comments
     if ( mb_strlen( $content, 'UTF-8' ) < ANTI_SPAM_MIN_LEN ) {
         return $approved;
     }
 
+    // check for english-like text
     if ( ! anti_spam_looks_english_simple( $content ) ) {
         return 'spam';
     }
 
+    // approve if text is acceptable
     return $approved;
 }
 
 // detect english-like text using latin letter ratio (helper function)
 function anti_spam_looks_english_simple( $text ) {
+    // normalize utf-8
+    $text = wp_check_invalid_utf8( $text );
+
     // remove urls and email addresses before analysis
     $clean = preg_replace( '#https?://\S+#ui', '', $text );
     $clean = preg_replace( '/\S+@\S+\.\S+/u', '', $clean );
