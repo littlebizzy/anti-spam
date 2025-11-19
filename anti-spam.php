@@ -3,7 +3,7 @@
 Plugin Name: Anti-Spam
 Plugin URI: https://www.littlebizzy.com/plugins/anti-spam
 Description: Spam protection for WordPress
-Version: 1.0.0
+Version: 1.1.0
 Author: LittleBizzy
 Author URI: https://www.littlebizzy.com
 Requires PHP: 7.0
@@ -64,6 +64,36 @@ function anti_spam_check_comment_language( $approved, $commentdata ) {
 
     // approve if text is acceptable
     return $approved;
+}
+
+// block new bbPress topics and replies that do not look english-like
+// Note: These hooks check the $args array right before the post is inserted into the database.
+if ( function_exists( 'bbp_get_topic_post_type' ) ) {
+    add_filter( 'bbp_new_topic_pre_insert', 'anti_spam_check_bbpress_post', 10 );
+}
+if ( function_exists( 'bbp_get_reply_post_type' ) ) {
+    add_filter( 'bbp_new_reply_pre_insert', 'anti_spam_check_bbpress_post', 10 );
+}
+
+function anti_spam_check_bbpress_post( $args ) {
+    // get post content (topic/reply text)
+    $content = isset( $args['post_content'] ) ? (string) $args['post_content'] : '';
+
+    // normalize utf-8
+    $content = wp_check_invalid_utf8( $content );
+
+    // skip short posts/replies
+    if ( mb_strlen( $content, 'UTF-8' ) < ANTI_SPAM_MIN_LEN ) {
+        return $args;
+    }
+
+    // check for english-like text, set status to 'spam' if check fails
+    if ( ! anti_spam_looks_english_simple( $content ) ) {
+        $args['post_status'] = 'spam';
+    }
+
+    // return the (possibly modified) arguments array
+    return $args;
 }
 
 // detect english-like text using latin letter ratio (helper function)
