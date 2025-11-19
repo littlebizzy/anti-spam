@@ -4,6 +4,9 @@ Spam protection for WordPress
 
 ## Changelog
 
+### 1.1.0
+- added support for bbPress by applying the anti-spam language filter to new topics and replies
+
 ### 1.0.0
 - initial release with English-language comment filter using Latin character ratio defined by `ANTI_SPAM_LATIN_MIN`
 - allows only English-like text based on `ANTI_SPAM_LANGS` using lightweight Unicode analysis
