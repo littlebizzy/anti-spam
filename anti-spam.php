@@ -3,11 +3,11 @@
 Plugin Name: Anti-Spam
 Plugin URI: https://www.littlebizzy.com/plugins/anti-spam
 Description: Spam protection for WordPress
-Version: 1.1.0
+Version: 1.2.0
 Author: LittleBizzy
 Author URI: https://www.littlebizzy.com
 Requires PHP: 7.0
-Tested up to: 6.7
+Tested up to: 6.8
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 Update URI: false
@@ -27,6 +27,11 @@ add_filter( 'gu_override_dot_org', function( $overrides ) {
     return $overrides;
 }, 999 );
 
+// define honeypot field name
+if ( ! defined( 'ANTI_SPAM_HONEYPOT_FIELD' ) ) {
+    define( 'ANTI_SPAM_HONEYPOT_FIELD', 'anti_spam_hp' );
+}
+
 // define allowed languages using iso 639-1 codes (comma-separated)
 if ( ! defined( 'ANTI_SPAM_LANGS' ) ) {
     define( 'ANTI_SPAM_LANGS', 'en' );
@@ -40,6 +45,28 @@ if ( ! defined( 'ANTI_SPAM_LATIN_MIN' ) ) {
 // define minimum comment length required for language analysis
 if ( ! defined( 'ANTI_SPAM_MIN_LEN' ) ) {
     define( 'ANTI_SPAM_MIN_LEN', 20 );
+}
+
+// output honeypot field in comment forms
+add_action( 'comment_form_after_fields', 'anti_spam_output_honeypot' );
+add_action( 'comment_form_logged_in_after', 'anti_spam_output_honeypot' );
+
+function anti_spam_output_honeypot() {
+    echo '<p style="display:none !important;">';
+    echo '<label for="' . esc_attr( ANTI_SPAM_HONEYPOT_FIELD ) . '">leave this field empty</label>';
+    echo '<input type="text" name="' . esc_attr( ANTI_SPAM_HONEYPOT_FIELD ) . '" value="" autocomplete="off" tabindex="-1" />';
+    echo '</p>';
+}
+
+// early honeypot check for comments
+add_filter( 'preprocess_comment', 'anti_spam_check_honeypot_comment', 1 );
+
+function anti_spam_check_honeypot_comment( $commentdata ) {
+    if ( ! empty( $_POST[ ANTI_SPAM_HONEYPOT_FIELD ] ) ) {
+        wp_die();
+    }
+
+    return $commentdata;
 }
 
 // block comments that do not look english-like (checks comment text only)
@@ -69,13 +96,19 @@ function anti_spam_check_comment_language( $approved, $commentdata ) {
 // block new bbPress topics and replies that do not look english-like
 // Note: These hooks check the $args array right before the post is inserted into the database.
 if ( function_exists( 'bbp_get_topic_post_type' ) ) {
-    add_filter( 'bbp_new_topic_pre_insert', 'anti_spam_check_bbpress_post', 10 );
+    add_filter( 'bbp_new_topic_pre_insert', 'anti_spam_check_bbpress_post', 1 );
 }
 if ( function_exists( 'bbp_get_reply_post_type' ) ) {
-    add_filter( 'bbp_new_reply_pre_insert', 'anti_spam_check_bbpress_post', 10 );
+    add_filter( 'bbp_new_reply_pre_insert', 'anti_spam_check_bbpress_post', 1 );
 }
 
 function anti_spam_check_bbpress_post( $args ) {
+    // honeypot check
+    if ( ! empty( $_POST[ ANTI_SPAM_HONEYPOT_FIELD ] ) ) {
+        $args['post_status'] = 'spam';
+        return $args;
+    }
+
     // get post content (topic/reply text)
     $content = isset( $args['post_content'] ) ? (string) $args['post_content'] : '';
 
