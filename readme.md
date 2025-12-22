@@ -4,6 +4,15 @@ Spam protection for WordPress
 
 ## Changelog
 
+### 1.2.0
+- added honeypot field to comment and bbPress forms to block automated submissions
+- implemented early server-side honeypot validation before database writes
+- moved bbPress spam checks to an earlier execution priority for faster rejection
+- applied honeypot protection to both guest comments and bbPress topics/replies
+- kept existing non-english filtering as a secondary heuristic
+- no captchas, no ip checks, and no impact on legitimate users
+- bumped `Tested up to` header to 6.8
+
 ### 1.1.0
 - added support for bbPress by applying the anti-spam language filter to new topics and replies
 
