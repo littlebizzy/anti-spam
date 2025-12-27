@@ -4,6 +4,12 @@ Spam protection for WordPress
 
 ## Changelog
 
+### 1.3.0
+- added minimum form fill time validation to block automated submissions
+- rejects submissions posted unrealistically fast by e.g. bots or scripts
+- combined honeypot and timing checks for early rejection
+- supports both WordPress comments and bbPress topics/replies
+
 ### 1.2.0
 - added honeypot field to comment and bbPress forms to block automated submissions
 - implemented early server-side honeypot validation before database writes
