@@ -3,7 +3,7 @@
 Plugin Name: Anti-Spam
 Plugin URI: https://www.littlebizzy.com/plugins/anti-spam
 Description: Spam protection for WordPress
-Version: 1.2.0
+Version: 1.3.0
 Author: LittleBizzy
 Author URI: https://www.littlebizzy.com
 Requires PHP: 7.0
@@ -32,6 +32,16 @@ if ( ! defined( 'ANTI_SPAM_HONEYPOT_FIELD' ) ) {
     define( 'ANTI_SPAM_HONEYPOT_FIELD', 'anti_spam_hp' );
 }
 
+// define timestamp field name
+if ( ! defined( 'ANTI_SPAM_TIMESTAMP_FIELD' ) ) {
+    define( 'ANTI_SPAM_TIMESTAMP_FIELD', 'anti_spam_ts' );
+}
+
+// define minimum form fill time in seconds
+if ( ! defined( 'ANTI_SPAM_MIN_FILL_TIME' ) ) {
+    define( 'ANTI_SPAM_MIN_FILL_TIME', 3 );
+}
+
 // define allowed languages using iso 639-1 codes (comma-separated)
 if ( ! defined( 'ANTI_SPAM_LANGS' ) ) {
     define( 'ANTI_SPAM_LANGS', 'en' );
@@ -47,23 +57,33 @@ if ( ! defined( 'ANTI_SPAM_MIN_LEN' ) ) {
     define( 'ANTI_SPAM_MIN_LEN', 20 );
 }
 
-// output honeypot field in comment forms
-add_action( 'comment_form_after_fields', 'anti_spam_output_honeypot' );
-add_action( 'comment_form_logged_in_after', 'anti_spam_output_honeypot' );
+// output honeypot and timestamp fields in comment forms
+add_action( 'comment_form_after_fields', 'anti_spam_output_fields' );
+add_action( 'comment_form_logged_in_after', 'anti_spam_output_fields' );
 
-function anti_spam_output_honeypot() {
+function anti_spam_output_fields() {
     echo '<p style="display:none !important;">';
     echo '<label for="' . esc_attr( ANTI_SPAM_HONEYPOT_FIELD ) . '">leave this field empty</label>';
     echo '<input type="text" name="' . esc_attr( ANTI_SPAM_HONEYPOT_FIELD ) . '" value="" autocomplete="off" tabindex="-1" />';
     echo '</p>';
+    echo '<input type="hidden" name="' . esc_attr( ANTI_SPAM_TIMESTAMP_FIELD ) . '" value="' . esc_attr( time() ) . '" />';
 }
 
-// early honeypot check for comments
-add_filter( 'preprocess_comment', 'anti_spam_check_honeypot_comment', 1 );
+// early honeypot and timing check for comments
+add_filter( 'preprocess_comment', 'anti_spam_check_comment_submission', 1 );
 
-function anti_spam_check_honeypot_comment( $commentdata ) {
+function anti_spam_check_comment_submission( $commentdata ) {
+    // honeypot check
     if ( ! empty( $_POST[ ANTI_SPAM_HONEYPOT_FIELD ] ) ) {
         wp_die();
+    }
+
+    // minimum fill time check
+    if ( isset( $_POST[ ANTI_SPAM_TIMESTAMP_FIELD ] ) ) {
+        $elapsed = time() - (int) $_POST[ ANTI_SPAM_TIMESTAMP_FIELD ];
+        if ( $elapsed < ANTI_SPAM_MIN_FILL_TIME ) {
+            wp_die();
+        }
     }
 
     return $commentdata;
@@ -107,6 +127,15 @@ function anti_spam_check_bbpress_post( $args ) {
     if ( ! empty( $_POST[ ANTI_SPAM_HONEYPOT_FIELD ] ) ) {
         $args['post_status'] = 'spam';
         return $args;
+    }
+
+    // minimum fill time check
+    if ( isset( $_POST[ ANTI_SPAM_TIMESTAMP_FIELD ] ) ) {
+        $elapsed = time() - (int) $_POST[ ANTI_SPAM_TIMESTAMP_FIELD ];
+        if ( $elapsed < ANTI_SPAM_MIN_FILL_TIME ) {
+            $args['post_status'] = 'spam';
+            return $args;
+        }
     }
 
     // get post content (topic/reply text)
