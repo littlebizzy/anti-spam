@@ -4,6 +4,13 @@ Spam protection for WordPress
 
 ## Changelog
 
+### 2.0.0
+- added single-use form nonce generation and server-side validation for comment and bbPress submission forms using WordPress transient storage (with automatic expiration of 900 seconds)
+- added stateful nonce-based request verification alongside existing honeypot and timestamp checks
+- added replay and parallel submission protection by rejecting reused or expired nonces and invalidating tokens immediately after first use
+- upgraded spam protection from stateless heuristics to modern token-based request authentication
+- `Tested up to:` bumped to 6.9
+
 ### 1.3.0
 - added minimum form fill time validation to block automated submissions
 - rejects submissions posted unrealistically fast by e.g. bots or scripts
