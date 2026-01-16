@@ -3,11 +3,11 @@
 Plugin Name: Anti-Spam
 Plugin URI: https://www.littlebizzy.com/plugins/anti-spam
 Description: Spam protection for WordPress
-Version: 1.3.0
+Version: 1.4.0
 Author: LittleBizzy
 Author URI: https://www.littlebizzy.com
 Requires PHP: 7.0
-Tested up to: 6.8
+Tested up to: 6.9
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 Update URI: false
@@ -37,6 +37,16 @@ if ( ! defined( 'ANTI_SPAM_TIMESTAMP_FIELD' ) ) {
     define( 'ANTI_SPAM_TIMESTAMP_FIELD', 'anti_spam_ts' );
 }
 
+// define nonce field name
+if ( ! defined( 'ANTI_SPAM_NONCE_FIELD' ) ) {
+    define( 'ANTI_SPAM_NONCE_FIELD', 'anti_spam_nonce' );
+}
+
+// define nonce ttl in seconds
+if ( ! defined( 'ANTI_SPAM_NONCE_TTL' ) ) {
+    define( 'ANTI_SPAM_NONCE_TTL', 900 );
+}
+
 // define minimum form fill time in seconds
 if ( ! defined( 'ANTI_SPAM_MIN_FILL_TIME' ) ) {
     define( 'ANTI_SPAM_MIN_FILL_TIME', 3 );
@@ -57,19 +67,25 @@ if ( ! defined( 'ANTI_SPAM_MIN_LEN' ) ) {
     define( 'ANTI_SPAM_MIN_LEN', 20 );
 }
 
-// output honeypot and timestamp fields in comment forms
+// output honeypot, timestamp, and nonce fields in comment forms
 add_action( 'comment_form_after_fields', 'anti_spam_output_fields' );
 add_action( 'comment_form_logged_in_after', 'anti_spam_output_fields' );
 
 function anti_spam_output_fields() {
+    $nonce = wp_generate_password( 32, false, false );
+    $key = 'anti_spam_nonce_' . hash( 'sha256', $nonce );
+
+    set_transient( $key, 1, ANTI_SPAM_NONCE_TTL );
+
     echo '<p style="display:none !important;">';
     echo '<label for="' . esc_attr( ANTI_SPAM_HONEYPOT_FIELD ) . '">leave this field empty</label>';
     echo '<input type="text" name="' . esc_attr( ANTI_SPAM_HONEYPOT_FIELD ) . '" value="" autocomplete="off" tabindex="-1" />';
     echo '</p>';
     echo '<input type="hidden" name="' . esc_attr( ANTI_SPAM_TIMESTAMP_FIELD ) . '" value="' . esc_attr( time() ) . '" />';
+    echo '<input type="hidden" name="' . esc_attr( ANTI_SPAM_NONCE_FIELD ) . '" value="' . esc_attr( $nonce ) . '" />';
 }
 
-// early honeypot and timing check for comments
+// early honeypot, timing, and nonce check for comments
 add_filter( 'preprocess_comment', 'anti_spam_check_comment_submission', 1 );
 
 function anti_spam_check_comment_submission( $commentdata ) {
@@ -85,6 +101,20 @@ function anti_spam_check_comment_submission( $commentdata ) {
             wp_die();
         }
     }
+
+    // nonce check
+    if ( empty( $_POST[ ANTI_SPAM_NONCE_FIELD ] ) ) {
+        wp_die();
+    }
+
+    $nonce = (string) $_POST[ ANTI_SPAM_NONCE_FIELD ];
+    $key   = 'anti_spam_nonce_' . hash( 'sha256', $nonce );
+
+    if ( ! get_transient( $key ) ) {
+        wp_die();
+    }
+
+    delete_transient( $key );
 
     return $commentdata;
 }
@@ -137,6 +167,22 @@ function anti_spam_check_bbpress_post( $args ) {
             return $args;
         }
     }
+
+    // nonce check
+    if ( empty( $_POST[ ANTI_SPAM_NONCE_FIELD ] ) ) {
+        $args['post_status'] = 'spam';
+        return $args;
+    }
+
+    $nonce = (string) $_POST[ ANTI_SPAM_NONCE_FIELD ];
+    $key   = 'anti_spam_nonce_' . hash( 'sha256', $nonce );
+
+    if ( ! get_transient( $key ) ) {
+        $args['post_status'] = 'spam';
+        return $args;
+    }
+
+    delete_transient( $key );
 
     // get post content (topic/reply text)
     $content = isset( $args['post_content'] ) ? (string) $args['post_content'] : '';
