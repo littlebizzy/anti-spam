@@ -16,6 +16,12 @@ The default token lifetime, minimum form completion time, minimum analyzed conte
 
 ## Changelog
 
+### 2.0.3
+- required valid positive timestamp fields for WordPress comment and bbPress submissions
+- rejected missing, malformed, future, and unrealistically fast form timestamps
+- added matching IDs to honeypot inputs for valid label associations
+- `Tested up to:` bumped to 7.0
+
 ### 2.0.2
 - limited honeypot, timing, and token validation to native WordPress comment-form submissions
 - prevented programmatic comment creation through `wp_new_comment()` from requiring plugin form fields
