@@ -173,7 +173,7 @@ add_filter( 'bbp_new_reply_pre_insert', 'anti_spam_check_bbpress_post', 1 );
 function anti_spam_check_bbpress_post( $args ) {
     // honeypot check
     if ( ! empty( $_POST[ ANTI_SPAM_HONEYPOT_FIELD ] ) ) {
-        $args['post_status'] = 'spam';
+        $args['post_status'] = bbp_get_spam_status_id();
         return $args;
     }
 
@@ -181,7 +181,7 @@ function anti_spam_check_bbpress_post( $args ) {
     if ( isset( $_POST[ ANTI_SPAM_TIMESTAMP_FIELD ] ) ) {
         $elapsed = time() - (int) $_POST[ ANTI_SPAM_TIMESTAMP_FIELD ];
         if ( $elapsed < ANTI_SPAM_MIN_FILL_TIME ) {
-            $args['post_status'] = 'spam';
+            $args['post_status'] = bbp_get_spam_status_id();
             return $args;
         }
     }
@@ -199,7 +199,7 @@ function anti_spam_check_bbpress_post( $args ) {
 
     // check for english-like text, set status to 'spam' if check fails
     if ( ! anti_spam_looks_english_simple( $content ) ) {
-        $args['post_status'] = 'spam';
+        $args['post_status'] = bbp_get_spam_status_id();
     }
 
     // return the (possibly modified) arguments array
