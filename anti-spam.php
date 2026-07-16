@@ -3,7 +3,7 @@
 Plugin Name: Anti-Spam
 Plugin URI: https://www.littlebizzy.com/plugins/anti-spam
 Description: Spam protection for WordPress
-Version: 2.0.1
+Version: 2.0.2
 Author: LittleBizzy
 Author URI: https://www.littlebizzy.com
 Requires PHP: 7.0
@@ -107,10 +107,10 @@ function anti_spam_output_bbpress_fields() {
     echo '<input type="hidden" name="' . esc_attr( ANTI_SPAM_TIMESTAMP_FIELD ) . '" value="' . esc_attr( time() ) . '" />';
 }
 
-// early honeypot, timing, and nonce check for comments
-add_filter( 'preprocess_comment', 'anti_spam_check_comment_submission', 1 );
+// early honeypot, timing, and nonce check for native comment form submissions
+add_action( 'pre_comment_on_post', 'anti_spam_check_comment_submission', 1 );
 
-function anti_spam_check_comment_submission( $commentdata ) {
+function anti_spam_check_comment_submission( $comment_post_id ) {
     // honeypot check
     if ( ! empty( $_POST[ ANTI_SPAM_HONEYPOT_FIELD ] ) ) {
         wp_die();
@@ -137,8 +137,6 @@ function anti_spam_check_comment_submission( $commentdata ) {
     }
 
     delete_transient( $key );
-
-    return $commentdata;
 }
 
 // block comments that do not look english-like (checks comment text only)
