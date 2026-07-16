@@ -2,6 +2,18 @@
 
 Spam protection for WordPress
 
+## Description
+
+Anti-Spam provides lightweight spam protection for native WordPress comments and bbPress forums without captchas, external APIs, tracking, browser fingerprinting, or IP-based blocking. All checks run locally within WordPress, with no remote reputation services or third-party data collection.
+
+For WordPress comments, the plugin adds a hidden honeypot field, a minimum form completion time check, and a short-lived single-use token stored through the WordPress Transients API. Submissions that fail these early form checks are rejected before normal comment processing, while content that fails the secondary language-ratio check is sent to the WordPress spam queue.
+
+For bbPress, the plugin adds honeypot and timestamp fields to standard new-topic and new-reply forms while leaving topic and reply edit forms unchanged. bbPress continues to handle its own native nonce validation, and suspicious forum submissions are assigned the native bbPress spam status so they remain compatible with its normal moderation and insertion workflow.
+
+Content analysis is intentionally simple and conservative. URLs and email addresses are removed before analysis, short submissions are excluded by default to reduce false positives, and the remaining Unicode letters are evaluated according to their Latin-script ratio. This acts as a secondary heuristic rather than dictionary-based or remote language detection.
+
+The default token lifetime, minimum form completion time, minimum analyzed content length, Latin-script threshold, and form field names can be adjusted through PHP constants defined before the plugin loads. The plugin has no settings screen and is designed to work quietly alongside the existing WordPress and bbPress moderation tools.
+
 ## Changelog
 
 ### 2.0.1
