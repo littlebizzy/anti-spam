@@ -16,6 +16,10 @@ The default token lifetime, minimum form completion time, minimum analyzed conte
 
 ## Changelog
 
+### 2.0.2
+- limited honeypot, timing, and token validation to native WordPress comment-form submissions
+- prevented programmatic comment creation through `wp_new_comment()` from requiring plugin form fields
+
 ### 2.0.1
 - added honeypot and timestamp fields to new bbPress topic and reply forms so the existing checks can run correctly
 - removed custom transient-backed token validation so bbPress submissions rely on native bbPress form nonce validation instead
