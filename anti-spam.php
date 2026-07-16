@@ -3,11 +3,11 @@
 Plugin Name: Anti-Spam
 Plugin URI: https://www.littlebizzy.com/plugins/anti-spam
 Description: Spam protection for WordPress
-Version: 2.0.2
+Version: 2.0.3
 Author: LittleBizzy
 Author URI: https://www.littlebizzy.com
 Requires PHP: 7.0
-Tested up to: 6.9
+Tested up to: 7.0
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 Update URI: false
@@ -79,7 +79,7 @@ function anti_spam_output_fields() {
 
     echo '<p style="display:none !important;">';
     echo '<label for="' . esc_attr( ANTI_SPAM_HONEYPOT_FIELD ) . '">leave this field empty</label>';
-    echo '<input type="text" name="' . esc_attr( ANTI_SPAM_HONEYPOT_FIELD ) . '" value="" autocomplete="off" tabindex="-1" />';
+    echo '<input type="text" id="' . esc_attr( ANTI_SPAM_HONEYPOT_FIELD ) . '" name="' . esc_attr( ANTI_SPAM_HONEYPOT_FIELD ) . '" value="" autocomplete="off" tabindex="-1" />';
     echo '</p>';
     echo '<input type="hidden" name="' . esc_attr( ANTI_SPAM_TIMESTAMP_FIELD ) . '" value="' . esc_attr( time() ) . '" />';
     echo '<input type="hidden" name="' . esc_attr( ANTI_SPAM_NONCE_FIELD ) . '" value="' . esc_attr( $nonce ) . '" />';
@@ -102,7 +102,7 @@ function anti_spam_output_bbpress_fields() {
 
     echo '<p style="display:none !important;">';
     echo '<label for="' . esc_attr( ANTI_SPAM_HONEYPOT_FIELD ) . '">leave this field empty</label>';
-    echo '<input type="text" name="' . esc_attr( ANTI_SPAM_HONEYPOT_FIELD ) . '" value="" autocomplete="off" tabindex="-1" />';
+    echo '<input type="text" id="' . esc_attr( ANTI_SPAM_HONEYPOT_FIELD ) . '" name="' . esc_attr( ANTI_SPAM_HONEYPOT_FIELD ) . '" value="" autocomplete="off" tabindex="-1" />';
     echo '</p>';
     echo '<input type="hidden" name="' . esc_attr( ANTI_SPAM_TIMESTAMP_FIELD ) . '" value="' . esc_attr( time() ) . '" />';
 }
@@ -116,12 +116,20 @@ function anti_spam_check_comment_submission( $comment_post_id ) {
         wp_die();
     }
 
-    // minimum fill time check
-    if ( isset( $_POST[ ANTI_SPAM_TIMESTAMP_FIELD ] ) ) {
-        $elapsed = time() - (int) $_POST[ ANTI_SPAM_TIMESTAMP_FIELD ];
-        if ( $elapsed < ANTI_SPAM_MIN_FILL_TIME ) {
-            wp_die();
-        }
+    // timestamp check
+    if (
+        ! isset( $_POST[ ANTI_SPAM_TIMESTAMP_FIELD ] ) ||
+        ! is_string( $_POST[ ANTI_SPAM_TIMESTAMP_FIELD ] ) ||
+        ! preg_match( '/^\d+$/', $_POST[ ANTI_SPAM_TIMESTAMP_FIELD ] )
+    ) {
+        wp_die();
+    }
+
+    $timestamp = (int) $_POST[ ANTI_SPAM_TIMESTAMP_FIELD ];
+    $elapsed   = time() - $timestamp;
+
+    if ( $timestamp <= 0 || $elapsed < ANTI_SPAM_MIN_FILL_TIME ) {
+        wp_die();
     }
 
     // nonce check
@@ -175,13 +183,22 @@ function anti_spam_check_bbpress_post( $args ) {
         return $args;
     }
 
-    // minimum fill time check
-    if ( isset( $_POST[ ANTI_SPAM_TIMESTAMP_FIELD ] ) ) {
-        $elapsed = time() - (int) $_POST[ ANTI_SPAM_TIMESTAMP_FIELD ];
-        if ( $elapsed < ANTI_SPAM_MIN_FILL_TIME ) {
-            $args['post_status'] = bbp_get_spam_status_id();
-            return $args;
-        }
+    // timestamp check
+    if (
+        ! isset( $_POST[ ANTI_SPAM_TIMESTAMP_FIELD ] ) ||
+        ! is_string( $_POST[ ANTI_SPAM_TIMESTAMP_FIELD ] ) ||
+        ! preg_match( '/^\d+$/', $_POST[ ANTI_SPAM_TIMESTAMP_FIELD ] )
+    ) {
+        $args['post_status'] = bbp_get_spam_status_id();
+        return $args;
+    }
+
+    $timestamp = (int) $_POST[ ANTI_SPAM_TIMESTAMP_FIELD ];
+    $elapsed   = time() - $timestamp;
+
+    if ( $timestamp <= 0 || $elapsed < ANTI_SPAM_MIN_FILL_TIME ) {
+        $args['post_status'] = bbp_get_spam_status_id();
+        return $args;
     }
 
     // get post content (topic/reply text)
@@ -231,5 +248,3 @@ function anti_spam_looks_english_simple( $text ) {
 
     return ( $latin_ratio >= ANTI_SPAM_LATIN_MIN );
 }
-
-// Ref: ChatGPT
