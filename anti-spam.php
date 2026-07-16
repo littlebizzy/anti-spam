@@ -3,7 +3,7 @@
 Plugin Name: Anti-Spam
 Plugin URI: https://www.littlebizzy.com/plugins/anti-spam
 Description: Spam protection for WordPress
-Version: 2.0.0
+Version: 2.0.1
 Author: LittleBizzy
 Author URI: https://www.littlebizzy.com
 Requires PHP: 7.0
@@ -85,6 +85,24 @@ function anti_spam_output_fields() {
     echo '<input type="hidden" name="' . esc_attr( ANTI_SPAM_NONCE_FIELD ) . '" value="' . esc_attr( $nonce ) . '" />';
 }
 
+// output anti-spam fields in new bbPress topic and reply forms
+add_action( 'bbp_theme_after_topic_form_content', 'anti_spam_output_bbpress_fields' );
+add_action( 'bbp_theme_after_reply_form_content', 'anti_spam_output_bbpress_fields' );
+
+function anti_spam_output_bbpress_fields() {
+    // skip topic edit forms
+    if ( function_exists( 'bbp_is_topic_edit' ) && bbp_is_topic_edit() ) {
+        return;
+    }
+
+    // skip reply edit forms
+    if ( function_exists( 'bbp_is_reply_edit' ) && bbp_is_reply_edit() ) {
+        return;
+    }
+
+    anti_spam_output_fields();
+}
+
 // early honeypot, timing, and nonce check for comments
 add_filter( 'preprocess_comment', 'anti_spam_check_comment_submission', 1 );
 
@@ -145,12 +163,8 @@ function anti_spam_check_comment_language( $approved, $commentdata ) {
 
 // block new bbPress topics and replies that do not look english-like
 // Note: These hooks check the $args array right before the post is inserted into the database.
-if ( function_exists( 'bbp_get_topic_post_type' ) ) {
-    add_filter( 'bbp_new_topic_pre_insert', 'anti_spam_check_bbpress_post', 1 );
-}
-if ( function_exists( 'bbp_get_reply_post_type' ) ) {
-    add_filter( 'bbp_new_reply_pre_insert', 'anti_spam_check_bbpress_post', 1 );
-}
+add_filter( 'bbp_new_topic_pre_insert', 'anti_spam_check_bbpress_post', 1 );
+add_filter( 'bbp_new_reply_pre_insert', 'anti_spam_check_bbpress_post', 1 );
 
 function anti_spam_check_bbpress_post( $args ) {
     // honeypot check
