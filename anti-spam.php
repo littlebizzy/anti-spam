@@ -85,7 +85,7 @@ function anti_spam_output_fields() {
     echo '<input type="hidden" name="' . esc_attr( ANTI_SPAM_NONCE_FIELD ) . '" value="' . esc_attr( $nonce ) . '" />';
 }
 
-// output anti-spam fields in new bbPress topic and reply forms
+// output honeypot and timestamp fields in new bbPress topic and reply forms
 add_action( 'bbp_theme_after_topic_form_content', 'anti_spam_output_bbpress_fields' );
 add_action( 'bbp_theme_after_reply_form_content', 'anti_spam_output_bbpress_fields' );
 
@@ -100,7 +100,11 @@ function anti_spam_output_bbpress_fields() {
         return;
     }
 
-    anti_spam_output_fields();
+    echo '<p style="display:none !important;">';
+    echo '<label for="' . esc_attr( ANTI_SPAM_HONEYPOT_FIELD ) . '">leave this field empty</label>';
+    echo '<input type="text" name="' . esc_attr( ANTI_SPAM_HONEYPOT_FIELD ) . '" value="" autocomplete="off" tabindex="-1" />';
+    echo '</p>';
+    echo '<input type="hidden" name="' . esc_attr( ANTI_SPAM_TIMESTAMP_FIELD ) . '" value="' . esc_attr( time() ) . '" />';
 }
 
 // early honeypot, timing, and nonce check for comments
@@ -181,22 +185,6 @@ function anti_spam_check_bbpress_post( $args ) {
             return $args;
         }
     }
-
-    // nonce check
-    if ( empty( $_POST[ ANTI_SPAM_NONCE_FIELD ] ) ) {
-        $args['post_status'] = 'spam';
-        return $args;
-    }
-
-    $nonce = (string) $_POST[ ANTI_SPAM_NONCE_FIELD ];
-    $key   = 'anti_spam_nonce_' . hash( 'sha256', $nonce );
-
-    if ( ! get_transient( $key ) ) {
-        $args['post_status'] = 'spam';
-        return $args;
-    }
-
-    delete_transient( $key );
 
     // get post content (topic/reply text)
     $content = isset( $args['post_content'] ) ? (string) $args['post_content'] : '';
