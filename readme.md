@@ -4,6 +4,12 @@ Spam protection for WordPress
 
 ## Changelog
 
+### 2.0.1
+- added the existing honeypot, timestamp, and single-use token fields to new bbPress topic and reply forms
+- fixed bbPress submissions being marked as spam because the required anti-spam token was not included in the forms
+- registered bbPress validation hooks independently of plugin load order
+- avoided generating unused anti-spam tokens when editing existing bbPress topics or replies
+
 ### 2.0.0
 - added single-use form nonce generation and server-side validation for comment and bbPress submission forms using WordPress transient storage (with automatic expiration of 900 seconds)
 - added stateful nonce-based request verification alongside existing honeypot and timestamp checks
