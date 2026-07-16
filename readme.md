@@ -6,7 +6,7 @@ Spam protection for WordPress
 
 ### 2.0.1
 - added honeypot and timestamp fields to new bbPress topic and reply forms so the existing checks can run correctly
-- removed custom transient-backed token validation from bbPress submissions and rely on bbPress native form nonce validation instead
+- removed custom transient-backed token validation so bbPress submissions rely on native bbPress form nonce validation instead
 - registered bbPress validation hooks independently of plugin load order
 - avoided adding anti-spam fields to bbPress topic and reply edit forms
 
