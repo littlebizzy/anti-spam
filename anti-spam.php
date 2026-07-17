@@ -3,7 +3,7 @@
 Plugin Name: Anti-Spam
 Plugin URI: https://www.littlebizzy.com/plugins/anti-spam
 Description: Spam protection for WordPress
-Version: 2.0.4
+Version: 2.0.5
 Author: LittleBizzy
 Author URI: https://www.littlebizzy.com
 Requires PHP: 7.0
@@ -197,7 +197,7 @@ function anti_spam_check_comment_language( $approved, $commentdata ) {
     $content = wp_check_invalid_utf8( $content );
 
     // skip short comments
-    if ( mb_strlen( $content, 'UTF-8' ) < ANTI_SPAM_MIN_LEN ) {
+    if ( anti_spam_get_content_length( $content ) < ANTI_SPAM_MIN_LEN ) {
         return $approved;
     }
 
@@ -247,7 +247,7 @@ function anti_spam_check_bbpress_post( $args ) {
     $content = wp_check_invalid_utf8( $content );
 
     // skip short posts/replies
-    if ( mb_strlen( $content, 'UTF-8' ) < ANTI_SPAM_MIN_LEN ) {
+    if ( anti_spam_get_content_length( $content ) < ANTI_SPAM_MIN_LEN ) {
         return $args;
     }
 
@@ -258,6 +258,15 @@ function anti_spam_check_bbpress_post( $args ) {
 
     // return the (possibly modified) arguments array
     return $args;
+}
+
+// get content length with a fallback when mbstring is unavailable
+function anti_spam_get_content_length( $content ) {
+    if ( function_exists( 'mb_strlen' ) ) {
+        return mb_strlen( $content, 'UTF-8' );
+    }
+
+    return strlen( $content );
 }
 
 // detect english-like text using latin letter ratio (helper function)

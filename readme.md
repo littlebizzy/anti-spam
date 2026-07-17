@@ -16,6 +16,9 @@ The default token lifetime, minimum form completion time, minimum analyzed conte
 
 ## Changelog
 
+### 2.0.5
+- added a safe content-length fallback when the PHP `mbstring` extension is unavailable
+
 ### 2.0.4
 - stored each WordPress comment token’s server-generated timestamp in its transient and required submitted timestamps to match it
 - added strict token format and transient structure validation before accepting comment submissions
