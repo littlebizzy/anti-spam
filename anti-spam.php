@@ -3,7 +3,7 @@
 Plugin Name: Anti-Spam
 Plugin URI: https://www.littlebizzy.com/plugins/anti-spam
 Description: Spam protection for WordPress
-Version: 2.0.5
+Version: 2.0.6
 Author: LittleBizzy
 Author URI: https://www.littlebizzy.com
 Requires PHP: 7.0
@@ -44,7 +44,7 @@ if ( ! defined( 'ANTI_SPAM_NONCE_FIELD' ) ) {
 
 // define nonce ttl in seconds
 if ( ! defined( 'ANTI_SPAM_NONCE_TTL' ) ) {
-    define( 'ANTI_SPAM_NONCE_TTL', 900 );
+    define( 'ANTI_SPAM_NONCE_TTL', 3600 );
 }
 
 // define minimum form fill time in seconds
@@ -165,7 +165,7 @@ function anti_spam_check_comment_submission( $comment_post_id ) {
 
     $elapsed = time() - $token_data['timestamp'];
 
-    if ( $elapsed < ANTI_SPAM_MIN_FILL_TIME ) {
+    if ( $elapsed < ANTI_SPAM_MIN_FILL_TIME || $elapsed > ANTI_SPAM_NONCE_TTL ) {
         wp_die();
     }
 

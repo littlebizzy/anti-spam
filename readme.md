@@ -16,6 +16,10 @@ The default token lifetime, minimum form completion time, minimum analyzed conte
 
 ## Changelog
 
+### 2.0.6
+- increased the WordPress comment token lifetime from 15 minutes to 1 hour to reduce legitimate submission failures
+- explicitly rejected WordPress comment tokens older than the configured lifetime
+
 ### 2.0.5
 - added a safe content-length fallback when the PHP `mbstring` extension is unavailable
 
