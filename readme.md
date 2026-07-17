@@ -17,10 +17,9 @@ The default token lifetime, minimum form completion time, minimum analyzed conte
 ## Changelog
 
 ### 2.0.4
-- stored the server-generated form timestamp with each transient-backed WordPress comment token
-- required submitted timestamps to match their stored token timestamps before timing validation
-- added strict token format and transient value validation before accepting comment submissions
-- delayed single-use token deletion until WordPress successfully inserts the comment so normal validation errors can be corrected and resubmitted
+- stored each WordPress comment token’s server-generated timestamp in its transient and required submitted timestamps to match it
+- added strict token format and transient structure validation before accepting comment submissions
+- delayed token deletion until successful comment insertion so failed WordPress validation does not consume the token
 
 ### 2.0.3
 - required valid positive timestamp fields for WordPress comment and bbPress submissions
