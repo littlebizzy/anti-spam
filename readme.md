@@ -6,7 +6,7 @@ Spam protection for WordPress
 
 Anti-Spam provides lightweight spam protection for native WordPress comments and bbPress forums without captchas, external APIs, tracking, browser fingerprinting, or IP-based blocking. All checks run locally within WordPress, with no remote reputation services or third-party data collection.
 
-For WordPress comments, the plugin adds a hidden honeypot field, a minimum form completion time check, and a short-lived single-use token stored through the WordPress Transients API. Submissions that fail these early form checks are rejected before normal comment processing, while content that fails the secondary language-ratio check is sent to the WordPress spam queue.
+For WordPress comments, the plugin adds a hidden honeypot field, a minimum form completion time check, and a short-lived single-use token stored through the WordPress Transients API. Each token stores the server-generated form timestamp so submitted timestamps cannot be replaced to bypass the timing check. Submissions that fail these early form checks are rejected before normal comment processing, while content that fails the secondary language-ratio check is sent to the WordPress spam queue.
 
 For bbPress, the plugin adds honeypot and timestamp fields to standard new-topic and new-reply forms while leaving topic and reply edit forms unchanged. bbPress continues to handle its own native nonce validation, and suspicious forum submissions are assigned the native bbPress spam status so they remain compatible with its normal moderation and insertion workflow.
 
@@ -15,6 +15,12 @@ Content analysis is intentionally simple and conservative. URLs and email addres
 The default token lifetime, minimum form completion time, minimum analyzed content length, Latin-script threshold, and form field names can be adjusted through PHP constants defined before the plugin loads. The plugin has no settings screen and is designed to work quietly alongside the existing WordPress and bbPress moderation tools.
 
 ## Changelog
+
+### 2.0.4
+- stored the server-generated form timestamp with each transient-backed WordPress comment token
+- required submitted timestamps to match their stored token timestamps before timing validation
+- added strict token format and transient value validation before accepting comment submissions
+- delayed single-use token deletion until WordPress successfully inserts the comment so normal validation errors can be corrected and resubmitted
 
 ### 2.0.3
 - required valid positive timestamp fields for WordPress comment and bbPress submissions
