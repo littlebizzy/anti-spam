@@ -20,6 +20,7 @@ The plugin has no settings screen. Its defaults can be adjusted by defining the 
 | `ANTI_SPAM_MIN_FILL_TIME` | `3` | Sets the minimum form completion time in seconds for WordPress comments and bbPress submissions. |
 | `ANTI_SPAM_MIN_LEN` | `20` | Sets the minimum content length required before the language-ratio check runs. |
 | `ANTI_SPAM_LATIN_MIN` | `0.75` | Sets the minimum proportion of Unicode letters that must use the Latin script. |
+| `ANTI_SPAM_LANGS` | `en` | Currently unused and reserved for possible future language support. |
 | `ANTI_SPAM_HONEYPOT_FIELD` | `anti_spam_hp` | Sets the honeypot field name used by WordPress comment and bbPress forms. |
 | `ANTI_SPAM_TIMESTAMP_FIELD` | `anti_spam_ts` | Sets the timestamp field name used by WordPress comment and bbPress forms. |
 | `ANTI_SPAM_NONCE_FIELD` | `anti_spam_nonce` | Sets the single-use token field name used by native WordPress comment forms. |
