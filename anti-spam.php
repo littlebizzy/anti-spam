@@ -3,7 +3,7 @@
 Plugin Name: Anti-Spam
 Plugin URI: https://www.littlebizzy.com/plugins/anti-spam
 Description: Spam protection for WordPress
-Version: 2.0.6
+Version: 2.0.7
 Author: LittleBizzy
 Author URI: https://www.littlebizzy.com
 Requires PHP: 7.0
@@ -118,10 +118,22 @@ function anti_spam_output_bbpress_fields() {
 add_action( 'pre_comment_on_post', 'anti_spam_check_comment_submission', 1 );
 add_action( 'comment_post', 'anti_spam_delete_comment_nonce' );
 
+// display a generic error when native comment verification fails
+function anti_spam_reject_comment_submission() {
+    wp_die(
+        esc_html__( 'Comment submission could not be verified. Please reload the page and try again.', 'anti-spam' ),
+        esc_html__( 'Comment Submission Error', 'anti-spam' ),
+        array(
+            'response'  => 403,
+            'back_link' => true,
+        )
+    );
+}
+
 function anti_spam_check_comment_submission( $comment_post_id ) {
     // honeypot check
     if ( ! empty( $_POST[ ANTI_SPAM_HONEYPOT_FIELD ] ) ) {
-        wp_die();
+        anti_spam_reject_comment_submission();
     }
 
     // timestamp check
@@ -130,13 +142,13 @@ function anti_spam_check_comment_submission( $comment_post_id ) {
         ! is_string( $_POST[ ANTI_SPAM_TIMESTAMP_FIELD ] ) ||
         ! preg_match( '/^\d+$/', $_POST[ ANTI_SPAM_TIMESTAMP_FIELD ] )
     ) {
-        wp_die();
+        anti_spam_reject_comment_submission();
     }
 
     $timestamp = (int) $_POST[ ANTI_SPAM_TIMESTAMP_FIELD ];
 
     if ( $timestamp <= 0 ) {
-        wp_die();
+        anti_spam_reject_comment_submission();
     }
 
     // nonce check
@@ -145,7 +157,7 @@ function anti_spam_check_comment_submission( $comment_post_id ) {
         ! is_string( $_POST[ ANTI_SPAM_NONCE_FIELD ] ) ||
         ! preg_match( '/^[A-Za-z0-9]{32}$/', $_POST[ ANTI_SPAM_NONCE_FIELD ] )
     ) {
-        wp_die();
+        anti_spam_reject_comment_submission();
     }
 
     $nonce      = $_POST[ ANTI_SPAM_NONCE_FIELD ];
@@ -160,13 +172,13 @@ function anti_spam_check_comment_submission( $comment_post_id ) {
         $token_data['timestamp'] <= 0 ||
         $timestamp !== $token_data['timestamp']
     ) {
-        wp_die();
+        anti_spam_reject_comment_submission();
     }
 
     $elapsed = time() - $token_data['timestamp'];
 
     if ( $elapsed < ANTI_SPAM_MIN_FILL_TIME || $elapsed > ANTI_SPAM_NONCE_TTL ) {
-        wp_die();
+        anti_spam_reject_comment_submission();
     }
 
     $GLOBALS['anti_spam_pending_nonce_key'] = $key;
