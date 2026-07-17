@@ -27,6 +27,9 @@ The plugin has no settings screen. Its defaults can be adjusted by defining the 
 
 ## Changelog
 
+### 2.0.7
+- displayed a generic user-facing error with an HTTP 403 response and back link when WordPress comment verification fails
+
 ### 2.0.6
 - increased the WordPress comment token lifetime from 15 minutes to 1 hour to reduce legitimate submission failures
 - explicitly rejected WordPress comment tokens older than the configured lifetime
