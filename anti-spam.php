@@ -3,7 +3,7 @@
 Plugin Name: Anti-Spam
 Plugin URI: https://www.littlebizzy.com/plugins/anti-spam
 Description: Spam protection for WordPress
-Version: 2.0.3
+Version: 2.0.4
 Author: LittleBizzy
 Author URI: https://www.littlebizzy.com
 Requires PHP: 7.0
@@ -72,16 +72,17 @@ add_action( 'comment_form_after_fields', 'anti_spam_output_fields' );
 add_action( 'comment_form_logged_in_after', 'anti_spam_output_fields' );
 
 function anti_spam_output_fields() {
-    $nonce = wp_generate_password( 32, false, false );
-    $key = 'anti_spam_nonce_' . hash( 'sha256', $nonce );
+    $nonce     = wp_generate_password( 32, false, false );
+    $key       = 'anti_spam_nonce_' . hash( 'sha256', $nonce );
+    $timestamp = time();
 
-    set_transient( $key, 1, ANTI_SPAM_NONCE_TTL );
+    set_transient( $key, $timestamp, ANTI_SPAM_NONCE_TTL );
 
     echo '<p style="display:none !important;">';
     echo '<label for="' . esc_attr( ANTI_SPAM_HONEYPOT_FIELD ) . '">leave this field empty</label>';
     echo '<input type="text" id="' . esc_attr( ANTI_SPAM_HONEYPOT_FIELD ) . '" name="' . esc_attr( ANTI_SPAM_HONEYPOT_FIELD ) . '" value="" autocomplete="off" tabindex="-1" />';
     echo '</p>';
-    echo '<input type="hidden" name="' . esc_attr( ANTI_SPAM_TIMESTAMP_FIELD ) . '" value="' . esc_attr( time() ) . '" />';
+    echo '<input type="hidden" name="' . esc_attr( ANTI_SPAM_TIMESTAMP_FIELD ) . '" value="' . esc_attr( $timestamp ) . '" />';
     echo '<input type="hidden" name="' . esc_attr( ANTI_SPAM_NONCE_FIELD ) . '" value="' . esc_attr( $nonce ) . '" />';
 }
 
@@ -107,8 +108,9 @@ function anti_spam_output_bbpress_fields() {
     echo '<input type="hidden" name="' . esc_attr( ANTI_SPAM_TIMESTAMP_FIELD ) . '" value="' . esc_attr( time() ) . '" />';
 }
 
-// early honeypot, timing, and nonce check for native comment form submissions
+// validate native comment form submissions and consume tokens after successful insertion
 add_action( 'pre_comment_on_post', 'anti_spam_check_comment_submission', 1 );
+add_action( 'comment_post', 'anti_spam_delete_comment_nonce' );
 
 function anti_spam_check_comment_submission( $comment_post_id ) {
     // honeypot check
@@ -126,25 +128,54 @@ function anti_spam_check_comment_submission( $comment_post_id ) {
     }
 
     $timestamp = (int) $_POST[ ANTI_SPAM_TIMESTAMP_FIELD ];
-    $elapsed   = time() - $timestamp;
 
-    if ( $timestamp <= 0 || $elapsed < ANTI_SPAM_MIN_FILL_TIME ) {
+    if ( $timestamp <= 0 ) {
         wp_die();
     }
 
     // nonce check
-    if ( empty( $_POST[ ANTI_SPAM_NONCE_FIELD ] ) ) {
+    if (
+        ! isset( $_POST[ ANTI_SPAM_NONCE_FIELD ] ) ||
+        ! is_string( $_POST[ ANTI_SPAM_NONCE_FIELD ] ) ||
+        ! preg_match( '/^[A-Za-z0-9]{32}$/', $_POST[ ANTI_SPAM_NONCE_FIELD ] )
+    ) {
         wp_die();
     }
 
-    $nonce = (string) $_POST[ ANTI_SPAM_NONCE_FIELD ];
-    $key   = 'anti_spam_nonce_' . hash( 'sha256', $nonce );
+    $nonce            = $_POST[ ANTI_SPAM_NONCE_FIELD ];
+    $key              = 'anti_spam_nonce_' . hash( 'sha256', $nonce );
+    $stored_timestamp = get_transient( $key );
 
-    if ( ! get_transient( $key ) ) {
+    if (
+        false === $stored_timestamp ||
+        ! is_int( $stored_timestamp ) ||
+        $stored_timestamp <= 0 ||
+        $timestamp !== $stored_timestamp
+    ) {
         wp_die();
     }
 
-    delete_transient( $key );
+    $elapsed = time() - $stored_timestamp;
+
+    if ( $elapsed < ANTI_SPAM_MIN_FILL_TIME ) {
+        wp_die();
+    }
+
+    $GLOBALS['anti_spam_pending_nonce_key'] = $key;
+}
+
+function anti_spam_delete_comment_nonce( $comment_id ) {
+    if (
+        (int) $comment_id <= 0 ||
+        ! isset( $GLOBALS['anti_spam_pending_nonce_key'] ) ||
+        ! is_string( $GLOBALS['anti_spam_pending_nonce_key'] ) ||
+        '' === $GLOBALS['anti_spam_pending_nonce_key']
+    ) {
+        return;
+    }
+
+    delete_transient( $GLOBALS['anti_spam_pending_nonce_key'] );
+    unset( $GLOBALS['anti_spam_pending_nonce_key'] );
 }
 
 // block comments that do not look english-like (checks comment text only)
