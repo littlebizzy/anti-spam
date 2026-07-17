@@ -76,7 +76,13 @@ function anti_spam_output_fields() {
     $key       = 'anti_spam_nonce_' . hash( 'sha256', $nonce );
     $timestamp = time();
 
-    set_transient( $key, $timestamp, ANTI_SPAM_NONCE_TTL );
+    set_transient(
+        $key,
+        array(
+            'timestamp' => $timestamp,
+        ),
+        ANTI_SPAM_NONCE_TTL
+    );
 
     echo '<p style="display:none !important;">';
     echo '<label for="' . esc_attr( ANTI_SPAM_HONEYPOT_FIELD ) . '">leave this field empty</label>';
@@ -142,20 +148,22 @@ function anti_spam_check_comment_submission( $comment_post_id ) {
         wp_die();
     }
 
-    $nonce            = $_POST[ ANTI_SPAM_NONCE_FIELD ];
-    $key              = 'anti_spam_nonce_' . hash( 'sha256', $nonce );
-    $stored_timestamp = get_transient( $key );
+    $nonce      = $_POST[ ANTI_SPAM_NONCE_FIELD ];
+    $key        = 'anti_spam_nonce_' . hash( 'sha256', $nonce );
+    $token_data = get_transient( $key );
 
     if (
-        false === $stored_timestamp ||
-        ! is_int( $stored_timestamp ) ||
-        $stored_timestamp <= 0 ||
-        $timestamp !== $stored_timestamp
+        false === $token_data ||
+        ! is_array( $token_data ) ||
+        ! isset( $token_data['timestamp'] ) ||
+        ! is_int( $token_data['timestamp'] ) ||
+        $token_data['timestamp'] <= 0 ||
+        $timestamp !== $token_data['timestamp']
     ) {
         wp_die();
     }
 
-    $elapsed = time() - $stored_timestamp;
+    $elapsed = time() - $token_data['timestamp'];
 
     if ( $elapsed < ANTI_SPAM_MIN_FILL_TIME ) {
         wp_die();
