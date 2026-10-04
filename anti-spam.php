@@ -3,7 +3,7 @@
 Plugin Name: Anti-Spam
 Plugin URI: https://www.littlebizzy.com/plugins/anti-spam
 Description: Spam protection for WordPress
-Version: 2.1.4
+Version: 2.2.0
 Author: LittleBizzy
 Author URI: https://www.littlebizzy.com
 Requires PHP: 7.0
@@ -37,16 +37,6 @@ if ( ! defined( 'ANTI_SPAM_TIMESTAMP_FIELD' ) ) {
     define( 'ANTI_SPAM_TIMESTAMP_FIELD', 'anti_spam_ts' );
 }
 
-// define nonce field name
-if ( ! defined( 'ANTI_SPAM_NONCE_FIELD' ) ) {
-    define( 'ANTI_SPAM_NONCE_FIELD', 'anti_spam_nonce' );
-}
-
-// define nonce ttl in seconds
-if ( ! defined( 'ANTI_SPAM_NONCE_TTL' ) ) {
-    define( 'ANTI_SPAM_NONCE_TTL', 3600 );
-}
-
 // define minimum form fill time in seconds
 if ( ! defined( 'ANTI_SPAM_MIN_FILL_TIME' ) ) {
     define( 'ANTI_SPAM_MIN_FILL_TIME', 3 );
@@ -67,29 +57,16 @@ if ( ! defined( 'ANTI_SPAM_MIN_LEN' ) ) {
     define( 'ANTI_SPAM_MIN_LEN', 20 );
 }
 
-// output honeypot, timestamp, and nonce fields in comment forms
+// output honeypot and timestamp fields in comment forms
 add_action( 'comment_form_after_fields', 'anti_spam_output_fields' );
 add_action( 'comment_form_logged_in_after', 'anti_spam_output_fields' );
 
 function anti_spam_output_fields() {
-    $nonce     = wp_generate_password( 32, false, false );
-    $key       = 'anti_spam_nonce_' . hash( 'sha256', $nonce );
-    $timestamp = time();
-
-    set_transient(
-        $key,
-        array(
-            'timestamp' => $timestamp,
-        ),
-        ANTI_SPAM_NONCE_TTL
-    );
-
     echo '<p style="display:none !important;">';
     echo '<label for="' . esc_attr( ANTI_SPAM_HONEYPOT_FIELD ) . '">leave this field empty</label>';
     echo '<input type="text" id="' . esc_attr( ANTI_SPAM_HONEYPOT_FIELD ) . '" name="' . esc_attr( ANTI_SPAM_HONEYPOT_FIELD ) . '" value="" autocomplete="off" tabindex="-1" />';
     echo '</p>';
-    echo '<input type="hidden" name="' . esc_attr( ANTI_SPAM_TIMESTAMP_FIELD ) . '" value="' . esc_attr( $timestamp ) . '" />';
-    echo '<input type="hidden" name="' . esc_attr( ANTI_SPAM_NONCE_FIELD ) . '" value="' . esc_attr( $nonce ) . '" />';
+    echo '<input type="hidden" name="' . esc_attr( ANTI_SPAM_TIMESTAMP_FIELD ) . '" value="' . esc_attr( time() ) . '" />';
 }
 
 // output honeypot and timestamp fields in new bbPress topic and reply forms
@@ -114,9 +91,8 @@ function anti_spam_output_bbpress_fields() {
     echo '<input type="hidden" name="' . esc_attr( ANTI_SPAM_TIMESTAMP_FIELD ) . '" value="' . esc_attr( time() ) . '" />';
 }
 
-// validate native comment form submissions and consume tokens after successful insertion
+// validate native comment form submissions
 add_action( 'pre_comment_on_post', 'anti_spam_check_comment_submission', 1 );
-add_action( 'comment_post', 'anti_spam_delete_comment_nonce' );
 
 // display a generic error when native comment verification fails
 function anti_spam_reject_comment_submission() {
@@ -146,56 +122,11 @@ function anti_spam_check_comment_submission( $comment_post_id ) {
     }
 
     $timestamp = (int) $_POST[ ANTI_SPAM_TIMESTAMP_FIELD ];
+    $elapsed   = time() - $timestamp;
 
-    if ( $timestamp <= 0 ) {
+    if ( $timestamp <= 0 || $elapsed < ANTI_SPAM_MIN_FILL_TIME ) {
         anti_spam_reject_comment_submission();
     }
-
-    // nonce check
-    if (
-        ! isset( $_POST[ ANTI_SPAM_NONCE_FIELD ] ) ||
-        ! is_string( $_POST[ ANTI_SPAM_NONCE_FIELD ] ) ||
-        ! preg_match( '/^[A-Za-z0-9]{32}$/', $_POST[ ANTI_SPAM_NONCE_FIELD ] )
-    ) {
-        anti_spam_reject_comment_submission();
-    }
-
-    $nonce      = $_POST[ ANTI_SPAM_NONCE_FIELD ];
-    $key        = 'anti_spam_nonce_' . hash( 'sha256', $nonce );
-    $token_data = get_transient( $key );
-
-    if (
-        false === $token_data ||
-        ! is_array( $token_data ) ||
-        ! isset( $token_data['timestamp'] ) ||
-        ! is_int( $token_data['timestamp'] ) ||
-        $token_data['timestamp'] <= 0 ||
-        $timestamp !== $token_data['timestamp']
-    ) {
-        anti_spam_reject_comment_submission();
-    }
-
-    $elapsed = time() - $token_data['timestamp'];
-
-    if ( $elapsed < ANTI_SPAM_MIN_FILL_TIME || $elapsed > ANTI_SPAM_NONCE_TTL ) {
-        anti_spam_reject_comment_submission();
-    }
-
-    $GLOBALS['anti_spam_pending_nonce_key'] = $key;
-}
-
-function anti_spam_delete_comment_nonce( $comment_id ) {
-    if (
-        (int) $comment_id <= 0 ||
-        ! isset( $GLOBALS['anti_spam_pending_nonce_key'] ) ||
-        ! is_string( $GLOBALS['anti_spam_pending_nonce_key'] ) ||
-        '' === $GLOBALS['anti_spam_pending_nonce_key']
-    ) {
-        return;
-    }
-
-    delete_transient( $GLOBALS['anti_spam_pending_nonce_key'] );
-    unset( $GLOBALS['anti_spam_pending_nonce_key'] );
 }
 
 // block regular comments that do not look english-like
