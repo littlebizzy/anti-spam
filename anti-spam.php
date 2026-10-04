@@ -3,7 +3,7 @@
 Plugin Name: Anti-Spam
 Plugin URI: https://www.littlebizzy.com/plugins/anti-spam
 Description: Spam protection for WordPress
-Version: 2.1.3
+Version: 2.1.4
 Author: LittleBizzy
 Author URI: https://www.littlebizzy.com
 Requires PHP: 7.0
@@ -198,10 +198,17 @@ function anti_spam_delete_comment_nonce( $comment_id ) {
     unset( $GLOBALS['anti_spam_pending_nonce_key'] );
 }
 
-// block comments that do not look english-like (checks comment text only)
+// block regular comments that do not look english-like
 add_filter( 'pre_comment_approved', 'anti_spam_check_comment_language', 10, 2 );
 
 function anti_spam_check_comment_language( $approved, $commentdata ) {
+    // leave pingbacks and trackbacks to normal wordpress handling
+    $comment_type = isset( $commentdata['comment_type'] ) ? (string) $commentdata['comment_type'] : '';
+
+    if ( 'pingback' === $comment_type || 'trackback' === $comment_type ) {
+        return $approved;
+    }
+
     // get comment text
     $content = isset( $commentdata['comment_content'] ) ? (string) $commentdata['comment_content'] : '';
     $clean   = anti_spam_clean_content( $content );
