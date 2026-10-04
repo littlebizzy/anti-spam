@@ -6,7 +6,7 @@ Spam protection for WordPress
 
 Anti-Spam provides lightweight spam protection for native WordPress comments and bbPress forums without captchas, external APIs, tracking, browser fingerprinting, or IP-based blocking. All checks run locally within WordPress, with no remote reputation services or third-party data collection.
 
-For WordPress comments, the plugin adds a hidden honeypot field, a minimum form completion time check, and a short-lived single-use token stored through the WordPress Transients API. Each token stores the server-generated form timestamp so submitted timestamps cannot be replaced to bypass the timing check. Submissions that fail these early form checks are rejected before normal comment processing, while content that fails the secondary language-ratio check is sent to the WordPress spam queue.
+For WordPress comments, the plugin adds a hidden honeypot field, a minimum form completion time check, and a short-lived single-use token stored through the WordPress Transients API. Each token stores the server-generated form timestamp so submitted timestamps cannot be replaced to bypass the timing check. Submissions that fail these early form checks are rejected before normal comment processing, while normal comment content that fails the secondary language-ratio check is sent to the WordPress spam queue. Pingbacks and trackbacks are left to normal WordPress handling and do not run through the language-ratio check.
 
 For bbPress, the plugin adds honeypot and timestamp fields to standard new-topic and new-reply forms while leaving topic and reply edit forms unchanged. bbPress continues to handle its own native nonce validation, and suspicious forum submissions are assigned the native bbPress spam status so they remain compatible with its normal moderation and insertion workflow.
 
@@ -26,6 +26,9 @@ The plugin has no settings screen. Its defaults can be adjusted by defining the 
 | `ANTI_SPAM_NONCE_FIELD` | `anti_spam_nonce` | Sets the single-use token field name used by native WordPress comment forms. |
 
 ## Changelog
+
+### 2.1.4
+- excluded WordPress pingbacks and trackbacks from the human-language ratio check while leaving normal comments unchanged
 
 ### 2.1.3
 - normalized leftover line breaks, tabs, and repeated spaces with WordPress core `wp_strip_all_tags()` behavior before content-length and language analysis
