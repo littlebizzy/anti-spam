@@ -3,7 +3,7 @@
 Plugin Name: Anti-Spam
 Plugin URI: https://www.littlebizzy.com/plugins/anti-spam
 Description: Spam protection for WordPress
-Version: 2.1.1
+Version: 2.1.2
 Author: LittleBizzy
 Author URI: https://www.littlebizzy.com
 Requires PHP: 7.0
@@ -62,7 +62,7 @@ if ( ! defined( 'ANTI_SPAM_LATIN_MIN' ) ) {
     define( 'ANTI_SPAM_LATIN_MIN', 0.75 );
 }
 
-// define minimum comment length required for language analysis
+// define minimum cleaned content length required for language analysis
 if ( ! defined( 'ANTI_SPAM_MIN_LEN' ) ) {
     define( 'ANTI_SPAM_MIN_LEN', 20 );
 }
@@ -204,17 +204,15 @@ add_filter( 'pre_comment_approved', 'anti_spam_check_comment_language', 10, 2 );
 function anti_spam_check_comment_language( $approved, $commentdata ) {
     // get comment text
     $content = isset( $commentdata['comment_content'] ) ? (string) $commentdata['comment_content'] : '';
+    $clean   = anti_spam_clean_content( $content );
 
-    // normalize utf-8
-    $content = wp_check_invalid_utf8( $content );
-
-    // skip short comments
-    if ( anti_spam_get_content_length( $content ) < ANTI_SPAM_MIN_LEN ) {
+    // skip short comments based on cleaned visible text
+    if ( anti_spam_get_content_length( $clean ) < ANTI_SPAM_MIN_LEN ) {
         return $approved;
     }
 
     // check for english-like text
-    if ( ! anti_spam_looks_english_simple( $content ) ) {
+    if ( ! anti_spam_looks_english_simple( $clean ) ) {
         return 'spam';
     }
 
@@ -264,21 +262,30 @@ function anti_spam_check_bbpress_post( $args ) {
         $content = (string) $args['post_title'] . ' ' . $content;
     }
 
-    // normalize utf-8
-    $content = wp_check_invalid_utf8( $content );
+    $clean = anti_spam_clean_content( $content );
 
-    // skip short posts/replies
-    if ( anti_spam_get_content_length( $content ) < ANTI_SPAM_MIN_LEN ) {
+    // skip short posts/replies based on cleaned visible text
+    if ( anti_spam_get_content_length( $clean ) < ANTI_SPAM_MIN_LEN ) {
         return $args;
     }
 
     // check for english-like text, set status to 'spam' if check fails
-    if ( ! anti_spam_looks_english_simple( $content ) ) {
+    if ( ! anti_spam_looks_english_simple( $clean ) ) {
         $args['post_status'] = bbp_get_spam_status_id();
     }
 
     // return the (possibly modified) arguments array
     return $args;
+}
+
+// remove markup, urls, and email addresses before content analysis
+function anti_spam_clean_content( $content ) {
+    $clean = wp_check_invalid_utf8( $content );
+    $clean = wp_strip_all_tags( $clean );
+    $clean = preg_replace( '#https?://\S+#ui', '', $clean );
+    $clean = preg_replace( '/\S+@\S+\.\S+/u', '', $clean );
+
+    return $clean;
 }
 
 // get content length with a fallback when mbstring is unavailable
@@ -290,16 +297,8 @@ function anti_spam_get_content_length( $content ) {
     return strlen( $content );
 }
 
-// detect english-like text using latin letter ratio (helper function)
-function anti_spam_looks_english_simple( $text ) {
-    // normalize utf-8
-    $text = wp_check_invalid_utf8( $text );
-
-    // remove markup, urls, and email addresses before analysis
-    $clean = wp_strip_all_tags( $text );
-    $clean = preg_replace( '#https?://\S+#ui', '', $clean );
-    $clean = preg_replace( '/\S+@\S+\.\S+/u', '', $clean );
-
+// detect english-like text using latin letter ratio on cleaned content
+function anti_spam_looks_english_simple( $clean ) {
     // count total unicode letters
     preg_match_all( '/\p{L}/u', $clean, $m_letters );
     $letters_total = isset( $m_letters[0] ) ? count( $m_letters[0] ) : 0;
