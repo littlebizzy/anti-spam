@@ -27,6 +27,10 @@ The plugin has no settings screen. Its defaults can be adjusted by defining the 
 
 ## Changelog
 
+### 2.1.0
+- included bbPress topic titles with topic content in the existing English-like language analysis while reply analysis remains content-only
+- `Tested up to:` bumped to 7.1
+
 ### 2.0.7
 - displayed a generic user-facing error with an HTTP 403 response and back link when WordPress comment verification fails
 
