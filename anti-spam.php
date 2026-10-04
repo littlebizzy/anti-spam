@@ -284,6 +284,7 @@ function anti_spam_clean_content( $content ) {
     $clean = wp_strip_all_tags( $clean, true );
     $clean = preg_replace( '#https?://\S+#ui', '', $clean );
     $clean = preg_replace( '/\S+@\S+\.\S+/u', '', $clean );
+    $clean = wp_strip_all_tags( $clean, true );
 
     return $clean;
 }
