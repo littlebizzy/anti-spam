@@ -6,7 +6,7 @@ Spam protection for WordPress
 
 Anti-Spam provides lightweight spam protection for native WordPress comments and bbPress forums without captchas, external APIs, tracking, browser fingerprinting, or IP-based blocking. All checks run locally within WordPress, with no remote reputation services or third-party data collection.
 
-For WordPress comments, the plugin adds a hidden honeypot field and a minimum form completion time check. These form checks are stateless and do not require transient-backed per-form tokens. Submissions that fail these early form checks are rejected before normal comment processing, while normal comment content that fails the secondary language-ratio check is sent to the WordPress spam queue. Pingbacks and trackbacks are left to normal WordPress handling and do not run through the language-ratio check.
+For WordPress comments, the plugin adds a hidden honeypot field and a minimum form completion time check. These form checks are stateless and do not require transient-backed per-form tokens. Submissions that fail these early form checks are rejected before normal comment processing, while normal comment content that fails the secondary language-ratio check is sent to the WordPress spam queue. Existing comment approval errors from WordPress or other plugins are preserved before language analysis. Pingbacks and trackbacks are left to normal WordPress handling and do not run through the language-ratio check.
 
 For bbPress, the plugin adds honeypot and timestamp fields to standard new-topic and new-reply forms while leaving topic and reply edit forms unchanged. bbPress continues to handle its own native nonce validation, and suspicious forum submissions are assigned the native bbPress spam status so they remain compatible with its normal moderation and insertion workflow.
 
@@ -24,6 +24,9 @@ The plugin has no settings screen. Its defaults can be adjusted by defining the 
 | `ANTI_SPAM_TIMESTAMP_FIELD` | `anti_spam_ts` | Sets the timestamp field name used by WordPress comment and bbPress forms. |
 
 ## Changelog
+
+### 2.2.1
+- preserved existing `WP_Error` comment approval results from WordPress or other plugins before the language-ratio check runs
 
 ### 2.2.0
 - removed the transient-backed single-use token system from native WordPress comments, including token generation, storage, validation, expiration, and cleanup
