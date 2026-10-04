@@ -10,7 +10,7 @@ For WordPress comments, the plugin adds a hidden honeypot field, a minimum form 
 
 For bbPress, the plugin adds honeypot and timestamp fields to standard new-topic and new-reply forms while leaving topic and reply edit forms unchanged. bbPress continues to handle its own native nonce validation, and suspicious forum submissions are assigned the native bbPress spam status so they remain compatible with its normal moderation and insertion workflow.
 
-Content analysis is intentionally simple and conservative. Markup, URLs, and email addresses are removed before analysis, short cleaned submissions are excluded by default to reduce false positives, and the remaining Unicode letters are evaluated according to their Latin-script ratio. This acts as a secondary heuristic rather than dictionary-based or remote language detection.
+Content analysis is intentionally simple and conservative. Markup, repeated whitespace, URLs, and email addresses are removed or normalized before analysis, short cleaned submissions are excluded by default to reduce false positives, and the remaining Unicode letters are evaluated according to their Latin-script ratio. This acts as a secondary heuristic rather than dictionary-based or remote language detection.
 
 The plugin has no settings screen. Its defaults can be adjusted by defining the following PHP constants before the plugin loads:
 
@@ -26,6 +26,9 @@ The plugin has no settings screen. Its defaults can be adjusted by defining the 
 | `ANTI_SPAM_NONCE_FIELD` | `anti_spam_nonce` | Sets the single-use token field name used by native WordPress comment forms. |
 
 ## Changelog
+
+### 2.1.3
+- normalized leftover line breaks, tabs, and repeated spaces with WordPress core `wp_strip_all_tags()` behavior before content-length and language analysis
 
 ### 2.1.2
 - applied the minimum content-length threshold after removing markup, URLs, and email addresses
