@@ -6,7 +6,7 @@ Spam protection for WordPress
 
 Anti-Spam provides lightweight spam protection for native WordPress comments and bbPress forums without captchas, external APIs, tracking, browser fingerprinting, or IP-based blocking. All checks run locally within WordPress, with no remote reputation services or third-party data collection.
 
-For WordPress comments, the plugin adds a hidden honeypot field, a minimum form completion time check, and a short-lived single-use token stored through the WordPress Transients API. Each token stores the server-generated form timestamp so submitted timestamps cannot be replaced to bypass the timing check. Submissions that fail these early form checks are rejected before normal comment processing, while normal comment content that fails the secondary language-ratio check is sent to the WordPress spam queue. Pingbacks and trackbacks are left to normal WordPress handling and do not run through the language-ratio check.
+For WordPress comments, the plugin adds a hidden honeypot field and a minimum form completion time check. Submissions that fail these early form checks are rejected before normal comment processing, while normal comment content that fails the secondary language-ratio check is sent to the WordPress spam queue. Pingbacks and trackbacks are left to normal WordPress handling and do not run through the language-ratio check.
 
 For bbPress, the plugin adds honeypot and timestamp fields to standard new-topic and new-reply forms while leaving topic and reply edit forms unchanged. bbPress continues to handle its own native nonce validation, and suspicious forum submissions are assigned the native bbPress spam status so they remain compatible with its normal moderation and insertion workflow.
 
@@ -16,16 +16,18 @@ The plugin has no settings screen. Its defaults can be adjusted by defining the 
 
 | Constant | Default | Purpose |
 | --- | --- | --- |
-| `ANTI_SPAM_NONCE_TTL` | `3600` | Sets the native WordPress comment token lifetime in seconds. |
 | `ANTI_SPAM_MIN_FILL_TIME` | `3` | Sets the minimum form completion time in seconds for WordPress comments and bbPress submissions. |
 | `ANTI_SPAM_MIN_LEN` | `20` | Sets the minimum cleaned content length required before the language-ratio check runs. |
 | `ANTI_SPAM_LATIN_MIN` | `0.75` | Sets the minimum proportion of Unicode letters that must use the Latin script. |
 | `ANTI_SPAM_LANGS` | `en` | Currently unused and reserved for possible future language support. |
 | `ANTI_SPAM_HONEYPOT_FIELD` | `anti_spam_hp` | Sets the honeypot field name used by WordPress comment and bbPress forms. |
 | `ANTI_SPAM_TIMESTAMP_FIELD` | `anti_spam_ts` | Sets the timestamp field name used by WordPress comment and bbPress forms. |
-| `ANTI_SPAM_NONCE_FIELD` | `anti_spam_nonce` | Sets the single-use token field name used by native WordPress comment forms. |
 
 ## Changelog
+
+### 2.2.0
+- removed the transient-backed single-use token from native WordPress comments to avoid cache reuse and transient-expiration failures
+- retained the existing honeypot, minimum form completion time, and content checks for WordPress comments
 
 ### 2.1.4
 - excluded WordPress pingbacks and trackbacks from the human-language ratio check while leaving normal comments unchanged
