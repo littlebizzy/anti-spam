@@ -3,7 +3,7 @@
 Plugin Name: Anti-Spam
 Plugin URI: https://www.littlebizzy.com/plugins/anti-spam
 Description: Spam protection for WordPress
-Version: 2.1.2
+Version: 2.1.3
 Author: LittleBizzy
 Author URI: https://www.littlebizzy.com
 Requires PHP: 7.0
@@ -281,7 +281,7 @@ function anti_spam_check_bbpress_post( $args ) {
 // remove markup, urls, and email addresses before content analysis
 function anti_spam_clean_content( $content ) {
     $clean = wp_check_invalid_utf8( $content );
-    $clean = wp_strip_all_tags( $clean );
+    $clean = wp_strip_all_tags( $clean, true );
     $clean = preg_replace( '#https?://\S+#ui', '', $clean );
     $clean = preg_replace( '/\S+@\S+\.\S+/u', '', $clean );
 
