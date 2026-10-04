@@ -6,7 +6,7 @@ Spam protection for WordPress
 
 Anti-Spam provides lightweight spam protection for native WordPress comments and bbPress forums without captchas, external APIs, tracking, browser fingerprinting, or IP-based blocking. All checks run locally within WordPress, with no remote reputation services or third-party data collection.
 
-For WordPress comments, the plugin adds a hidden honeypot field and a minimum form completion time check. Submissions that fail these early form checks are rejected before normal comment processing, while normal comment content that fails the secondary language-ratio check is sent to the WordPress spam queue. Pingbacks and trackbacks are left to normal WordPress handling and do not run through the language-ratio check.
+For WordPress comments, the plugin adds a hidden honeypot field and a minimum form completion time check. These form checks are stateless and do not require transient-backed per-form tokens. Submissions that fail these early form checks are rejected before normal comment processing, while normal comment content that fails the secondary language-ratio check is sent to the WordPress spam queue. Pingbacks and trackbacks are left to normal WordPress handling and do not run through the language-ratio check.
 
 For bbPress, the plugin adds honeypot and timestamp fields to standard new-topic and new-reply forms while leaving topic and reply edit forms unchanged. bbPress continues to handle its own native nonce validation, and suspicious forum submissions are assigned the native bbPress spam status so they remain compatible with its normal moderation and insertion workflow.
 
@@ -26,8 +26,10 @@ The plugin has no settings screen. Its defaults can be adjusted by defining the 
 ## Changelog
 
 ### 2.2.0
-- removed the transient-backed single-use token from native WordPress comments to avoid cache reuse and transient-expiration failures
-- retained the existing honeypot, minimum form completion time, and content checks for WordPress comments
+- removed the transient-backed single-use token system from native WordPress comments, including token generation, storage, validation, expiration, and cleanup
+- simplified WordPress comment verification to use the existing honeypot and minimum form completion time checks without requiring transient state
+- improved compatibility with full-page caching and avoided legitimate comment failures caused by reused cached tokens or early transient expiration
+- left bbPress verification unchanged, including its native nonce handling, honeypot, timing check, and content analysis
 
 ### 2.1.4
 - excluded WordPress pingbacks and trackbacks from the human-language ratio check while leaving normal comments unchanged
