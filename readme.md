@@ -10,7 +10,7 @@ For WordPress comments, the plugin adds a hidden honeypot field, a minimum form 
 
 For bbPress, the plugin adds honeypot and timestamp fields to standard new-topic and new-reply forms while leaving topic and reply edit forms unchanged. bbPress continues to handle its own native nonce validation, and suspicious forum submissions are assigned the native bbPress spam status so they remain compatible with its normal moderation and insertion workflow.
 
-Content analysis is intentionally simple and conservative. Markup, URLs, and email addresses are removed before analysis, short submissions are excluded by default to reduce false positives, and the remaining Unicode letters are evaluated according to their Latin-script ratio. This acts as a secondary heuristic rather than dictionary-based or remote language detection.
+Content analysis is intentionally simple and conservative. Markup, URLs, and email addresses are removed before analysis, short cleaned submissions are excluded by default to reduce false positives, and the remaining Unicode letters are evaluated according to their Latin-script ratio. This acts as a secondary heuristic rather than dictionary-based or remote language detection.
 
 The plugin has no settings screen. Its defaults can be adjusted by defining the following PHP constants before the plugin loads:
 
@@ -18,7 +18,7 @@ The plugin has no settings screen. Its defaults can be adjusted by defining the 
 | --- | --- | --- |
 | `ANTI_SPAM_NONCE_TTL` | `3600` | Sets the native WordPress comment token lifetime in seconds. |
 | `ANTI_SPAM_MIN_FILL_TIME` | `3` | Sets the minimum form completion time in seconds for WordPress comments and bbPress submissions. |
-| `ANTI_SPAM_MIN_LEN` | `20` | Sets the minimum content length required before the language-ratio check runs. |
+| `ANTI_SPAM_MIN_LEN` | `20` | Sets the minimum cleaned content length required before the language-ratio check runs. |
 | `ANTI_SPAM_LATIN_MIN` | `0.75` | Sets the minimum proportion of Unicode letters that must use the Latin script. |
 | `ANTI_SPAM_LANGS` | `en` | Currently unused and reserved for possible future language support. |
 | `ANTI_SPAM_HONEYPOT_FIELD` | `anti_spam_hp` | Sets the honeypot field name used by WordPress comment and bbPress forms. |
@@ -26,6 +26,10 @@ The plugin has no settings screen. Its defaults can be adjusted by defining the 
 | `ANTI_SPAM_NONCE_FIELD` | `anti_spam_nonce` | Sets the single-use token field name used by native WordPress comment forms. |
 
 ## Changelog
+
+### 2.1.2
+- applied the minimum content-length threshold after removing markup, URLs, and email addresses
+- reused the same cleaned text for both minimum-length and Latin-script ratio checks across comments, bbPress topics, and replies
 
 ### 2.1.1
 - stripped HTML markup before the existing language-ratio analysis so markup does not influence the detected script ratio
